@@ -1,0 +1,35 @@
+/*
+* Scot Junkin
+*
+*/
+version 1.1;
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns curl extension = "http://xml.libslax.org/curl";
+ns xutil extension = "http://xml.libslax.org/xutil"; import "../import/junos.xsl";
+
+
+param $url = "http://192.168.1.200:8000/event";
+
+
+match / {
+
+var $message = event-script-input;
+
+  <event-script-results> {
+    var $xml = xutil:xml-to-string($message);
+    var $post-params = {
+      <url> $url;
+      <method> "post";
+      <verbose>;
+      <insecure>;
+      <param name="data"> $xml;
+    }
+    expr jcs:syslog("external.info", $post-params);
+    <curl-post> {
+        copy-of $post-params;
+    }
+    var $results = curl:single($url, $post-params);
+
+  }
+
+}
